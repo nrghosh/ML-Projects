@@ -1,6 +1,14 @@
 
 # Problem Statement
-What even are genres? Genres are a special method that we use to classify music. While some types of classifications are extremely subjective, music has evolved to a point where we can draw lines, albeit blurry ones, in the sand, and make statements about two songs, asserting them to different categories. However, how can classifying every song by hand be practical? Manually sorting tracks into categories is both labor-intensive and time consuming, while sorting tracks into their respective genres can be a subjective exercise, vulnerable to personal biases and skewed perspectives. In our final project, we attempt to train a few types of models to classify songs to certain genres. 
+What even are genres? Genres are a special method that we use to classify music. 
+While some types of classifications are extremely subjective, music has evolved 
+to a point where we can draw lines, albeit blurry ones, in the sand, and make 
+statements about two songs, asserting them to different categories. However, 
+how can classifying every song by hand be practical? Manually sorting tracks 
+into categories is both labor-intensive and time consuming, while sorting 
+tracks into their respective genres can be a subjective exercise, vulnerable 
+to personal biases and skewed perspectives. In our final project, we attempt 
+to train a few types of models to classify songs to certain genres. 
 
 # Data Description
 ```{r libraries, echo=TRUE, results='hide',message=FALSE, eval=FALSE}
@@ -27,12 +35,19 @@ keys <- spotifyOAuth("LoveDaSystem","81cc700dd4b14417bffd6f4fb52ac8c0","a34ddd6b
 df<-getPlaylist("dekraus-us",offset=0,keys)
 ```
 
-The data we used for this project was obtained from Spotify, by using the Rspotify package. We used the Spotify API to import a playlist into R, and took advantage of the fact that the Spotify API allows us to get variables (attributes) of each song, including Artist, Album, Popularity (0-100), Danceability, Energy (0-1), Key, Loudness, Mode, Speechiness, Acousticness, Instrumentalness, Liveness, Valence, Tempo, Duration (in ms), and Time Signature.
+The data we used for this project was obtained from Spotify, by using the 
+Rspotify package. We used the Spotify API to import a playlist into R, and 
+took advantage of the fact that the Spotify API allows us to get variables 
+(attributes) of each song, including Artist, Album, Popularity (0-100), 
+Danceability, Energy (0-1), Key, Loudness, Mode, Speechiness, Acousticness, 
+Instrumentalness, Liveness, Valence, Tempo, Duration (in ms), and 
+Time Signature.
 
 # Data Preprocessing
 ```{r dfmanagement, echo=TRUE, results='hide',message=FALSE, eval=FALSE}
-#The 26 playlist is the biggest
-#The getPlaylistSongs function only fetches 100 at a time, but it does allow an offset
+# The 26 playlist is the biggest
+# The getPlaylistSongs function only fetches 100 at a time, but it does allow 
+# an offset
 rock<-data.frame(getPlaylistSongs(df$ownerid[1],df$id[1],offset=0,keys))
 jazz<-data.frame(getPlaylistSongs(df$ownerid[2],df$id[2],offset=0,keys))
 folk<-data.frame(getPlaylistSongs(df$ownerid[3],df$id[3],offset=0,keys))
@@ -54,7 +69,7 @@ dance$genre<-as.factor("Dance")
 classical$genre<-as.factor("Classical")
 country$genre<-as.factor("Country")
 
-# Put it all together!
+# Put it all together
 playlist<-rbind(rock,jazz,folk,folk2,indie,hiphop,dance,classical,country,stringsAsFactors=FALSE)
 
 # Remove any duplicate songs
@@ -108,6 +123,7 @@ We already had the "genre" variable for each song from Spotify, so we converted 
 ### Support Vector Machine
 In order to create, train and test our SVM model, we divided the dataset into a training and testing subset. A Support Vector Machine is a method for classifying data. It falls under the category of supervised learning, which means that the model estimates some classifying function by looking at labeled training data (in this case, examples of songs that have been categorized into specific genres.) It works by representing aspects of the data in physical space, and creating imaginary lines (or vectors) in order to accurately separate the data into categories.
 ```{r svm, echo=TRUE, results='hide',message=FALSE, eval=FALSE}
+
 #SVM
 set.seed(123)
 index <- sample(nrow(features), 0.75*nrow(features))
@@ -129,7 +145,13 @@ confusionMatrix(prediction,test$genres)
 ```
 
 ### Random Forest
-We then followed a similar process for building a Random Forest model. A random forest model is an "ensemble learning" technique, which means that we build up a lot of full grown decision trees (low bias, high variance) in parallel, and then aggregate them into one model. A decision tree is a model that represents possible outcomes along with their probabilities. By building a lot of these models and taking the average, we can predict the genre of a song to a certain degree of certainty. 
+We then followed a similar process for building a Random Forest model. 
+A random forest model is an "ensemble learning" technique, which means that we 
+build up a lot of full grown decision trees (low bias, high variance) in 
+parallel, and then aggregate them into one model. A decision tree is a model 
+that represents possible outcomes along with their probabilities. By building a 
+lot of these models and taking the average, we can predict the genre of a song 
+to a certain degree of certainty. 
 ```{r randomforest, echo=TRUE, results='hide',message=FALSE, eval=FALSE}
 # Random Forest
 
@@ -143,11 +165,16 @@ fit.forest <- randomForest(genres ~ .-id, data=train,
 pred<-predict(fit.forest,test)
 confusionMatrix(pred,test$genres)
 # Initially, .58 accuracy. Remove alternative music and try again.
-# Accuracy is .7339 without alternative music. Alternative music is a pretty badly defined genre, and is somewhat of an "other" category, as far as genres go, which would explain some of the misclassifications.
+# Accuracy is .7339 without alternative music. Alternative music is a pretty 
+# badly defined genre, and is somewhat of an "other" category, as far as genres 
+# go, which would explain some of the misclassifications.
 ```
 
 ### Gradient Boosted Tree
-We then created a gradient boosted tree model using XGBoost. A quirk of XGBoost required us to convert genres from factors to numeric variables. Gradient boosted trees are built on the concept of aggregating many shallow (small) decision trees, for high bias and low variance.
+We then created a gradient boosted tree model using XGBoost. A quirk of XGBoost 
+required us to convert genres from factors to numeric variables. Gradient 
+boosted trees are built on the concept of aggregating many shallow (small) 
+decision trees, for high bias and low variance.
 ```{r xgboost, echo=TRUE, results='hide',message=FALSE, eval=FALSE}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # xgBoost Trees

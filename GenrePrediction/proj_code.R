@@ -11,17 +11,14 @@ library(rlang)
 library(randomForest)
 library(caret)
 library(e1071)
-##
-# Authentication (hardcoded)
 
-keys <- spotifyOAuth("LoveDaSystem","81cc700dd4b14417bffd6f4fb52ac8c0","a34ddd6bd44a464f92f6ada8007ad2ac")
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# NOTE: Authentication step for Spotify API has been redacted
 
-#g etPlaylist gets all playlists for a user
+# Get all playlists for a user
 df<-getPlaylist("dekraus-us",offset=0,keys)
 
-#The 26 playlist is the biggest
-#The getPlaylistSongs function only fetches 100 at a time, but it does allow an offset
+# The 26 playlist is the biggest
+# API call limited to 100 at a time, but allows for an offset
 rock<-data.frame(getPlaylistSongs(df$ownerid[1],df$id[1],offset=0,keys))
 jazz<-data.frame(getPlaylistSongs(df$ownerid[2],df$id[2],offset=0,keys))
 folk<-data.frame(getPlaylistSongs(df$ownerid[3],df$id[3],offset=0,keys))
@@ -44,14 +41,14 @@ country$genre<-as.factor("Country")
 
 playlist<-rbind(rock,jazz,folk,folk2,indie,hiphop,dance,classical,country,stringsAsFactors=FALSE)
 
-#removing duplicate songs
+# Remove duplicate songs
 anyDuplicated(playlist$id)
 anyDuplicated(playlist$tracks)
 playlist[playlist$tracks=="Stay Alive",]
 playlist<-playlist[-183,]
 anyDuplicated(playlist$albumId)
 
-#create the df for analyzing
+# Refactor to dataframes for analysis
 features <- data.frame(matrix(ncol=16,nrow=nrow(playlist)))
 for(i in 1:100){
   features[i,] <- getFeatures(playlist[['id']][i], keys)
@@ -76,17 +73,18 @@ for(i in 401:nrow(playlist)){
 
 features<-features[1:nrow(playlist),]
 
-
 features$x17<-0
-colnames(features)<-c('id','danceability','energy','key','loudness','mode','speechiness','acousticness','instrumentalness','liveness','valence',
-                      'tempo','duration_ms','time_signature','uri','analysis_url','genres')
+colnames(features)<-c('id','danceability','energy','key','loudness','mode',
+        'speechiness','acousticness','instrumentalness','liveness','valence',
+        'tempo','duration_ms','time_signature','uri','analysis_url','genres')
 
 features$genres<-playlist$genre
 
-features[,15]<-NULL #run this part twice
+features[,15]<-NULL # run this twice
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#SVM
+#############
+# SVM Model #
+#############
 set.seed(1234)
 index <- sample(nrow(features), 0.75*nrow(features))
 train <- features[index,]
@@ -103,11 +101,11 @@ tuned.svm <- svm(genres ~.-id, data=train,
 prediction <- predict(tuned.svm, test)
 table(test$genres, prediction)
 confusionMatrix(prediction,test$genres)
-#Accuracy is .6048. Most error comes from rock category as well as indie
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-########Part 2
-#randomforest
+
+#######################
+# Random Forest Model #
+#######################
 
 train$id<-as.factor(train$id)
 test$id<-as.factor(test$id)
@@ -118,15 +116,17 @@ fit.forest <- randomForest(genres ~ .-id, data=train,
                            importance=TRUE)
 pred<-predict(fit.forest,test)
 confusionMatrix(pred,test$genres)
-#58% accuracy. remove alternative and try again
-#accuracy is 70% without alternative music. 
-# "Alternative" is not well defined which would explain this misclassification
+# Accuracy jumps 12% from 58 to 70% when we remove "alternative" genre
 
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#xgbBoost Trees
+
+#######################################
+# XGBoost Gradient Boosted Tree Model #
+#######################################
+
 install.packages("xgboost")
 library(xgboost)
-#xggboost only does numeric
+
+# XGBoost requires conversion to numeric
 train$key=as.numeric(train$key)
 test$key=as.numeric(test$key)
 train$mode=as.numeric(train$mode)
@@ -162,7 +162,6 @@ test$dance=ifelse(test$genres=="Dance", 1, 0)
 tc <- trainControl(method = "cv",
                    number = 10)
 
-# random seed
 set.seed(1234)
 model2 <- train(rock+indie+country+hiphop+country+folk+jazz+dance ~ .-id , 
                 data = train_matrix,
@@ -174,4 +173,3 @@ model2 <- train(rock+indie+country+hiphop+country+folk+jazz+dance ~ .-id ,
 model2
 predict<-predict(model2,test)
 confusionMatrix(predict,test$genres)
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
