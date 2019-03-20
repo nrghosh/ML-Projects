@@ -1,1 +1,3 @@
 # ML-Projects
+
+Two predictive ML projects. Exploring a variety of models including SVM, XGBoost, and others...
