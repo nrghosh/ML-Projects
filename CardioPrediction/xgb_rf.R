@@ -1,12 +1,13 @@
 # Part 1: Data Prep 
-load("/Users/nikhilghosh/Desktop/DM:ML/asgn4/heart.rdata")
+# load("/...path.../heart.rdata")
 set.seed(1234)
 index <- sample(nrow(heart), 0.75*nrow(heart))
 train <- heart[index,]
 test <- heart[-index,]
 
 # Part 2: Random Forest Model
-# Ensemble learning method for classification, training many decision trees and outputting the mode
+# Ensemble learning method for classification, training many decision trees and 
+# outputting the mode
 library(randomForest)
 library(caret)
 set.seed(1234)
@@ -18,13 +19,14 @@ fit.forest <- randomForest(output ~ .,
 pred <- predict(fit.forest, test)
 confusionMatrix(pred, test$output, positive="Present")
 
-# The accuracy of this model is 0.79, the sensitivity is 0.79, and specificity is rounded to 0.795. 
+# The accuracy of this model is 0.79, the sensitivity is 0.79, and specificity 
+# is rounded to 0.795. 
 
 
 # Part 3: XGB Boosting
-# 'Extreme Gradient Boosting' uses an ensemble of weak decision models for classification problems
-# Aggregate many 'weak learns' (guesses that are slightly above average/random chance) into strong
-# prediction probability.
+# 'Extreme Gradient Boosting' uses an ensemble of weak decision models for 
+# classification problems We aggregate many 'weak learns' (guesses that are 
+# slightly above average/random chance) into strong prediction probability.
 library(caret)
 set.seed(1234)
 tc <- trainControl(method = "cv",
@@ -37,4 +39,5 @@ xgbmodel <- train(output ~ . ,
 predict <- predict(xgbmodel, newdata=test)
 confusionMatrix(predict, test$output, positive="Present")
 
-# The accuracy of this model is 0.71, the sensitivity is 0.79, and specificity is 0.64. 
+# The accuracy of this model is 0.71, the sensitivity is 0.79, and 
+# specificity is 0.64. 

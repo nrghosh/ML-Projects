@@ -1,5 +1,5 @@
 # Part 1: Data Prep
-# load("/Users/nikhilghosh/Desktop/DM:ML/asgn5/heart.rdata")
+# load("/...path.../heart.rdata")
 set.seed(1234)
 index <- sample(nrow(heart), 0.75*nrow(heart))
 train <- heart[index,]
@@ -34,6 +34,6 @@ tuned.svm <- svm(output ~., data=train,
                  gamma=.01, cost=1)
 prediction <- predict(tuned.svm, test)
 
-# Evaluate new (tuned) model
+# Evaluate new (tuned) model using caret
 library(caret)
 confusionMatrix(prediction, test$output, positive="Present")
